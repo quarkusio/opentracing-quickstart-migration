@@ -1,7 +1,10 @@
 package org.acme;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.opentracingshim.OpenTracingShim;
 import io.opentracing.Scope;
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -9,20 +12,20 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.opentracing.Traced;
 
 @Path("/hello")
 @ApplicationScoped
 public class GreetingResource {
 
     @Inject
-    io.opentracing.Tracer legacyTracer;
+    io.opentelemetry.api.OpenTelemetry openTelemetry;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    @Traced(operationName = "Not needed, will change the current span name")
+    @WithSpan(value = "Not needed, will create a new span, child of the automatic JAX-RS span")
     public String hello() {
         // Add a tag to the active span
+        Tracer legacyTracer = OpenTracingShim.createTracerShim(openTelemetry);
         legacyTracer.activeSpan().setTag(Tags.COMPONENT, "GreetingResource");
 
         // Create a manual inner span
