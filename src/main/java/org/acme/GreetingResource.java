@@ -1,43 +1,46 @@
 package org.acme;
 
-import io.opentracing.Scope;
-import io.opentracing.Span;
-import io.opentracing.tag.Tags;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.opentracing.Traced;
+
+import static io.opentelemetry.api.trace.StatusCode.*;
 
 @Path("/hello")
 @ApplicationScoped
 public class GreetingResource {
 
     @Inject
-    io.opentracing.Tracer legacyTracer;
+    io.opentelemetry.api.trace.Tracer otelTracer;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    @Traced(operationName = "Not needed, will change the current span name")
+    @WithSpan(value = "Not needed, will create a new span, child of the automatic JAX-RS span")
     public String hello() {
         // Add a tag to the active span
-        legacyTracer.activeSpan().setTag(Tags.COMPONENT, "GreetingResource");
+        Span incomingSpan = Span.current();
+        incomingSpan.setAttribute(SemanticAttributes.CODE_NAMESPACE, "GreetingResource");
 
         // Create a manual inner span
-        Span innerSpan = legacyTracer.buildSpan("Count response chars").start();
-
-        try (Scope dbScope = legacyTracer.scopeManager().activate(innerSpan)) {
-            String response = "Hello from RESTEasy Reactive";
-            innerSpan.setTag("response-chars-count", response.length());
+        Span innerSpan = otelTracer.spanBuilder("Count response chars").startSpan();
+        try (Scope scope = innerSpan.makeCurrent()) {
+            final String response = "Hello from RESTEasy Reactive";
+            innerSpan.setAttribute("response-chars-count", response.length());
             return response;
         } catch (Exception e) {
-            innerSpan.setTag("error", true);
-            innerSpan.setTag("error.message", e.getMessage());
+            innerSpan.setStatus(ERROR);
+            innerSpan.recordException(e);
             throw e;
         } finally {
-            innerSpan.finish();
+            innerSpan.end();
         }
     }
 }
