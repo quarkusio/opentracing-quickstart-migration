@@ -1,8 +1,31 @@
-# opentracing-quickstart
+# Migrate opentracing-quickstart to OpenTelemetry
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+This project uses Quarkus, the Supersonic Subatomic Java Framework. It provides guidance on how to migrate from OpenTracing to OpenTelemetry.
 
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+
+The starting point is an automatically generated application from https://code.quarkus.io/ using `resteasy-reactive`and `quarkus-smallrye-opentracing.
+
+You can follow the steps described in this Quarkus tutorial: [Migrate from OpenTracing to OpenTelemetry](https://quarkus.io/guides/telemetry-opentracing-to-otel-tutorial).
+
+The steps in the tutorial relate to the branches in this repository, in the following way:
+
+| Tutorial Step | Branch | Commit                                                                                                                                                                                                                                                                                           |
+| ------------- | ------ |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1. Starting point | [main](https://github.com/brunobat/opentracing-quickstart) | [1. Starting point](https://github.com/brunobat/opentracing-quickstart/commit/27193f700258b05c03708282ea1cba5783ab8e9b)                                                                                                                                                                          |
+| 2. Big bang change from OpenTracing to OpenTelemetry | [2-big-bang-change](https://github.com/brunobat/opentracing-quickstart/tree/2-big-bang-change)| [2. Big Bang change](https://github.com/brunobat/opentracing-quickstart/commit/a5b6b5e5bc15cb7bbaaefee3b10f1129bad51df6)                                                                                                                                                                         |
+| 3. The big bang replacement, when you have manual instrumentation | [3-big-bang-replacement](https://github.com/brunobat/opentracing-quickstart/tree/3-big-bang-replacement)| [3.a OpenTracing manual instrumentation](https://github.com/brunobat/opentracing-quickstart/commit/d92dba5f3edb6e55b330721a1f9bacd48f2c74ec) <br/>[3.b OpenTelemetry manual instrumentation](https://github.com/brunobat/opentracing-quickstart/commit/c279b713857901c03c5cf22afcec2f19080bca1b) |
+| 4. The OpenTracing shim | [4-opentracing-shim](https://github.com/brunobat/opentracing-quickstart/tree/4-opentracing-shim)| [4.a OpenTracing shim - before](https://github.com/brunobat/opentracing-quickstart/commit/e4ff72d4bab4ea358efab2d6bb1685fef785e901) <br/> [4.b OpenTracing shim - after](https://github.com/brunobat/opentracing-quickstart/commit/2814337563bc9d4acc6ba172f2db9aa28557f270) |
+
+You can follow the different commits and see the relates changes.
+
+## Starting Jaeger
+
+Let's start the Jaeger-all-in-one Docker image, where we will retrieve and see the captured traces:
+
+```bash
+docker run -e COLLECTOR_OTLP_ENABLED=true -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 4317:4317 -p 4318:4318 -p 14250:14250 -p 14268:14268 -p 14269:14269 -p 9411:9411 jaegertracing/all-in-one:latest
+```
 
 ## Running the application in dev mode
 
